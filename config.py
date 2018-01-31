@@ -1,8 +1,4 @@
-data_directories = {'root': r'data/',
-                    'gpx': r'data/gpx/',
-                    'csv': r'data/csv/',
-                    'msm': r'data/max_speed_matrices/'}
+import os
 
-minutes = 60
-minimum_gradient = -100
-maximum_gradient = 100
+class Config(object):
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'

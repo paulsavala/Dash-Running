@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import numpy as np
 import dataProcessing
-import config as cfg # My own config.py file with configuration parameters
+import config_dev as cfg # My own config.py file with configuration parameters
 
 def metadata_from_gpx(filename):
     """

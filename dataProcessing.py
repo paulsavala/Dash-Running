@@ -2,7 +2,7 @@ import gpxpy # Used for reading gpx files
 from geopy.distance import vincenty # Used for calculating distances between (lat, lon) pairs
 import pandas as pd
 import numpy as np
-import config as cfg
+import config_dev as cfg
 
 def prep_df(df):
     """

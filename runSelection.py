@@ -1,4 +1,4 @@
-import config as cfg # My own config.py file with configuration parameters
+import config_dev as cfg # My own config.py file with configuration parameters
 from models import *
 import fileIO
 import os

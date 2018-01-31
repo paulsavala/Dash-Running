@@ -1,7 +1,7 @@
 import fileIO
 import dataProcessing
 import os
-import config as cfg # My own config.py file with configuration parameters
+import config_dev as cfg # My own config.py file with configuration parameters
 import pandas as pd
 
 class Run(object):

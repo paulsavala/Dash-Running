@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Hello, {{ user.username }}!</h1>
+  {% for run in runs %}
+    <div>
+      <p>
+        {{ run.runner.username }} ran {{ run.distance }} miles:
+        <b>"{{ run.run_name}}"</b>
+      </p>
+    </div>
+  {% endfor %}
+{% endblock %}

@@ -1,0 +1,15 @@
+<html>
+  <head>
+    {% if title %}
+    <title>{{ title }} - Site</title>
+    {% else %}
+  </head>
+    {% endif %}
+  <body>
+    <div>
+      Dash Running: <a href="/index">Home</a>
+    </div>
+    <hr>
+    {% block content %}{% endblock %}
+  </body>
+</html>

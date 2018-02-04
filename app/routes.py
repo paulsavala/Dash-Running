@@ -2,28 +2,29 @@ from flask import render_template, flash, redirect, url_for, request
 from app import app, db
 from app.forms import LoginForm, RegistrationForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User
+from app.models import User, Run
 from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 import os
-from app.fileIO import allowed_file
+from app.fileIO import allowed_file, metadata_from_gpx
 
 @app.route('/')
 @app.route('/index')
 @login_required
 def index():
-    runs = [
-        {
-            'runner': {'username': 'Ling'},
-            'run_name': 'Run with Paul',
-            'distance': 5.2
-        },
-        {
-            'runner': {'username': 'Almond'},
-            'run_name': 'My paws are tired',
-            'distance': 3.1
-        }
-    ]
+    runs = Run.query.filter_by(user_id=current_user.id)
+    # runs = [
+    #     {
+    #         'runner': {'username': 'Ling'},
+    #         'run_name': 'Run with Paul',
+    #         'distance': 5.2
+    #     },
+    #     {
+    #         'runner': {'username': 'Almond'},
+    #         'run_name': 'My paws are tired',
+    #         'distance': 3.1
+    #     }
+    # ]
     return render_template('index.html', title='Home', runs=runs)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -76,5 +77,9 @@ def upload():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            name, timestamp = metadata_from_gpx(filename)
+            run = Run(name=name, timestamp=timestamp, user_id=current_user.id)
+            db.session.add(run)
+            db.session.commit()
             return redirect(url_for('index'))
     return render_template('upload.html', title='Upload')

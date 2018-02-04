@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import app.dataProcessing
 from app import app
+from datetime import datetime
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -16,17 +17,18 @@ def metadata_from_gpx(filename):
     """
     gpx_directory = app.config['GPX_FOLDER']
 
-    if os.path.isfile(gpx_directory + filename + '.gpx') == False:
+    if os.path.isfile(gpx_directory + filename) == False:
         return None, None, None
     else:
         gpstracks = []
-        with open(gpx_directory + filename + '.gpx', 'r') as gpxfile:
+        with open(gpx_directory + filename, 'r') as gpxfile:
             gpx = gpxpy.parse(gpxfile)
             name = gpx.tracks[0].name
-            date_time = gpx.tracks[0].segments[0].points[0].time.isoformat()
-            date, time = date_time.split('T')
-            time = time.replace(':', '-') # A colon is used to indicate a key for metadata, so those must be changed
-        return name, date, time
+            timestamp = gpx.tracks[0].segments[0].points[0].time
+            #timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+            #date, time = timestamp.split('T')
+            #time = time.replace(':', '-') # A colon is used to indicate a key for metadata, so those must be changed
+        return name, timestamp
 
 def gpx_to_csv(filename, date):
     """
@@ -43,7 +45,7 @@ def gpx_to_csv(filename, date):
     name, _, time = metadata_from_gpx(filename)
 
     gpstracks = []
-    with open(gpx_directory + filename + '.gpx', 'r') as gpxfile:
+    with open(gpx_directory + filename, 'r') as gpxfile:
         gpx = gpxpy.parse(gpxfile)
         for track in gpx.tracks:
             for segment in track.segments:

@@ -5,8 +5,7 @@
   {% for run in runs %}
     <div>
       <p>
-        {{ run.runner.username }} ran {{ run.distance }} miles:
-        <b>"{{ run.run_name}}"</b>
+        {{ current_user.username }}: <b>"{{ run.name }}"</b>
       </p>
     </div>
   {% endfor %}

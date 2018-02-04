@@ -3,14 +3,18 @@ from geopy.distance import vincenty # Used for calculating distances between (la
 import os
 import pandas as pd
 import numpy as np
-import dataProcessing
-import config_dev as cfg # My own config.py file with configuration parameters
+import app.dataProcessing
+from app import app
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 def metadata_from_gpx(filename):
     """
     Gets the name, date and time from a gpx file, given the filename. Returns all three as strings.
     """
-    gpx_directory = cfg.data_directories['gpx']
+    gpx_directory = app.config['GPX_FOLDER']
 
     if os.path.isfile(gpx_directory + filename + '.gpx') == False:
         return None, None, None
@@ -32,8 +36,8 @@ def gpx_to_csv(filename, date):
 
     name, _, time = metadata_from_gpx(filename)
 
-    gpx_directory = cfg.data_directories['gpx']
-    csv_directory = cfg.data_directories['csv']
+    gpx_directory = app.config['GPX_FOLDER']
+    csv_directory = app.config['CSV_FOLDER']
     csv_date_directory = csv_directory + date + r'/'
 
     name, _, time = metadata_from_gpx(filename)
@@ -60,7 +64,7 @@ def gpx_to_csv(filename, date):
     except OSError:
         pass
 
-    minutes = cfg.minutes
+    minutes = app.config['minutes']
     time_interval = np.arange(60*minutes + 1)
 
     os.makedirs(os.path.dirname(csv_date_directory + filename + '.csv'), exist_ok=True)
@@ -77,7 +81,7 @@ def load_csv_to_df(filename, date):
     date), and return a Pandas DataFrame with the contents. Note that the
     filename should *not* include an extension ('.csv').
     """
-    csv_directory = cfg.data_directories['csv']
+    csv_directory = app.config['CSV_FOLDER']
     csv_date_directory = csv_directory + date + r'/'
 
     with open(csv_date_directory + filename + '.csv') as csv:
@@ -95,7 +99,7 @@ def load_csv_to_df(filename, date):
 def write_max_speed_matrix(df, filename, date):
     name, _, time = metadata_from_gpx(filename)
 
-    msm_directory = cfg.data_directories['msm']
+    msm_directory = app.config['MSM_FOLDER']
     msm_date_directory = msm_directory  + date + r'/'
 
     try:
@@ -113,7 +117,7 @@ def write_max_speed_matrix(df, filename, date):
     return True
 
 def read_max_speed_matrix(filename, date):
-    msm_directory = cfg.data_directories['msm']
+    msm_directory = app.config['MSM_FOLDER']
     msm_date_directory = msm_directory + date + r'/'
 
     with open(msm_date_directory + filename + '.csv', 'r') as msm:

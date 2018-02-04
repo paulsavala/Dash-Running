@@ -2,7 +2,6 @@ import gpxpy # Used for reading gpx files
 from geopy.distance import vincenty # Used for calculating distances between (lat, lon) pairs
 import pandas as pd
 import numpy as np
-import config_dev as cfg
 
 def prep_df(df):
     """
@@ -67,10 +66,10 @@ def rolling_max_speed(rolling_window, df):
     return max_speed
 
 def compute_max_speed_df(df):
-    minutes = cfg.minutes
+    minutes = app.config['max_minutes']
     time_interval = np.arange(60*minutes + 1)
-    minimum_gradient = cfg.minimum_gradient
-    maximum_gradient = cfg.maximum_gradient
+    minimum_gradient = app.config['min_gradient']
+    maximum_gradient = app.config['max_gradient']
     gradient_interval = np.arange(minimum_gradient, maximum_gradient + 1)
     # Compute the maximum speed over all gradients which appear...
     max_speed_matrix = pd.DataFrame([rolling_max_speed(t, df) for t in time_interval]).fillna(0)

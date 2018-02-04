@@ -4,6 +4,9 @@ from app.forms import LoginForm, RegistrationForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User
 from werkzeug.urls import url_parse
+from werkzeug import secure_filename
+import os
+from app.fileIO import allowed_file
 
 @app.route('/')
 @app.route('/index')
@@ -58,3 +61,20 @@ def register():
         flash('Welcome to Dash Running.')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
+
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('Nothing to upload')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('Please select a GPX file to upload')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect(url_for('index'))
+    return render_template('upload.html', title='Upload')

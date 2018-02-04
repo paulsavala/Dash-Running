@@ -78,6 +78,10 @@ def upload():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             name, timestamp = metadata_from_gpx(filename)
+            run = Run.query.filter_by(name=name, timestamp=timestamp, user_id=current_user.id)
+            if run is not None:
+                flash('This run already exists in the database')
+                return redirect(request.url)
             run = Run(name=name, timestamp=timestamp, user_id=current_user.id)
             db.session.add(run)
             db.session.commit()

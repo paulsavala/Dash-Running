@@ -2,6 +2,7 @@ import gpxpy # Used for reading gpx files
 from geopy.distance import vincenty # Used for calculating distances between (lat, lon) pairs
 import pandas as pd
 import numpy as np
+from app import app
 
 def prep_df(df):
     """
@@ -62,17 +63,20 @@ def rolling_max_speed(rolling_window, df):
     rolling_df['rounded_gradient_100'] = rolling_df['gradient_100'].apply(np.round)
     rolling_groupby = rolling_df.groupby('rounded_gradient_100')
 
-    max_speed = {int(name): max(group['speed_meters_sec'].values) for name, group in rolling_groupby}
+    max_speed = {int(name): max(group['speed_meters_sec'].values) \
+                            for name, group in rolling_groupby}
     return max_speed
 
 def compute_max_speed_df(df):
-    minutes = app.config['max_minutes']
+    minutes = app.config['MAX_MINUTES']
     time_interval = np.arange(60*minutes + 1)
-    minimum_gradient = app.config['min_gradient']
-    maximum_gradient = app.config['max_gradient']
-    gradient_interval = np.arange(minimum_gradient, maximum_gradient + 1)
+    min_gradient = app.config['MIN_GRADIENT']
+    max_gradient = app.config['MAX_GRADIENT']
+    gradient_interval = np.arange(min_gradient, max_gradient + 1)
+    df = prep_df(df)
     # Compute the maximum speed over all gradients which appear...
-    max_speed_matrix = pd.DataFrame([rolling_max_speed(t, df) for t in time_interval]).fillna(0)
+    max_speed_matrix = pd.DataFrame([rolling_max_speed(t, df) \
+                                    for t in time_interval]).fillna(0)
 
     # ... then fill in those gradients which don't appear with zero max speed
     df_data = max_speed_matrix

@@ -6,6 +6,7 @@ import numpy as np
 import app.dataProcessing
 from app import app
 from datetime import datetime
+from app.dataProcessing import compute_max_speed_df
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -30,19 +31,48 @@ def metadata_from_gpx(filename):
             #time = time.replace(':', '-') # A colon is used to indicate a key for metadata, so those must be changed
         return name, timestamp
 
-def gpx_to_csv(filename, date):
+def gpx_to_csv_to_msm(run, filename):
+    df = gpx_to_csv(run, filename)
+    max_speed_df = compute_max_speed_df(df)
+    date = run.timestamp.date().isoformat()
+    write_max_speed_matrix(max_speed_df, run, date)
+
+    # gpx_directory = app.config['GPX_FOLDER']
+    # csv_directory = app.config['CSV_FOLDER']
+    # date = run.timestamp.date().isoformat()
+    # csv_date_directory = csv_directory + date + r'/'
+    #
+    # gpstracks = []
+    # with open(gpx_directory + filename, 'r') as gpxfile:
+    #     gpx = gpxpy.parse(gpxfile)
+    #     for track in gpx.tracks:
+    #         for segment in track.segments:
+    #             for point in segment.points:
+    #                 dict = {'Timestamp' : point.time,
+    #                         'Latitude' : point.latitude,
+    #                         'Longitude' : point.longitude,
+    #                         'Elevation' : point.elevation
+    #                         }
+    #                 gpstracks.append(dict)
+    #
+    # df = pd.DataFrame(gpstracks)
+    # max_speed_df = compute_max_speed_df(df)
+    return True
+
+def gpx_to_csv(run, filename):
     """
-    Parse a GPX file into a list of dictonaries, convert it to a Pandas data frame, then write to csv, along
-    with metadata
+    Parse a GPX file into a list of dictonaries, convert it to a Pandas data
+    frame, then write it to a csv. Takes in a Run object.
     """
 
-    name, _, time = metadata_from_gpx(filename)
-
+    # name, _, time = metadata_from_gpx(filename)
+    #
     gpx_directory = app.config['GPX_FOLDER']
     csv_directory = app.config['CSV_FOLDER']
+    date = run.timestamp.date().isoformat()
     csv_date_directory = csv_directory + date + r'/'
-
-    name, _, time = metadata_from_gpx(filename)
+    #
+    # name, _, time = metadata_from_gpx(filename)
 
     gpstracks = []
     with open(gpx_directory + filename, 'r') as gpxfile:
@@ -61,21 +91,21 @@ def gpx_to_csv(filename, date):
 
     # If the converted csv file already exists, remove it so that it can be written again. This avoids
     # appending stuff to the end of an already existing csv file and creating problems
-    try:
-        os.remove(csv_date_directory + filename + '.csv')
-    except OSError:
-        pass
+    # try:
+    #     os.remove(csv_date_directory + filename + '.csv')
+    # except OSError:
+    #     pass
 
-    minutes = app.config['minutes']
+    #minutes = app.config['max_minutes']
+    minutes = 120
     time_interval = np.arange(60*minutes + 1)
 
-    os.makedirs(os.path.dirname(csv_date_directory + filename + '.csv'), exist_ok=True)
-    with open(csv_date_directory + filename + '.csv', 'a') as csv:
-        csv.write("#name:" + name + '\n')
-        csv.write("#date:" + date + '\n')
-        csv.write("#time:" + time + '\n')
+    csv_filename = str(run.id)
+
+    os.makedirs(os.path.dirname(csv_date_directory + csv_filename + '.csv'), exist_ok=True)
+    with open(csv_date_directory + csv_filename + '.csv', 'a') as csv:
         df.to_csv(csv, index = False)
-    return True
+    return df
 
 def load_csv_to_df(filename, date):
     """
@@ -98,11 +128,12 @@ def load_csv_to_df(filename, date):
         df = pd.read_csv(csv, skiprows = rows_to_skip)
     return df
 
-def write_max_speed_matrix(df, filename, date):
-    name, _, time = metadata_from_gpx(filename)
+def write_max_speed_matrix(df, run, date):
+    #name, _, time = metadata_from_gpx(filename)
 
     msm_directory = app.config['MSM_FOLDER']
     msm_date_directory = msm_directory  + date + r'/'
+    filename = str(run.id)
 
     try:
         os.remove(msm_date_directory + filename + '.csv')
@@ -111,11 +142,18 @@ def write_max_speed_matrix(df, filename, date):
 
     os.makedirs(os.path.dirname(msm_date_directory + filename + '.csv'), exist_ok=True)
     with open(msm_date_directory + filename + '.csv', 'a') as msm_csv:
-        msm_csv.write("#name:" + name + '\n')
-        msm_csv.write("#date:" + date + '\n')
-        msm_csv.write("#time:" + time + '\n')
+        # msm_csv.write("#name:" + name + '\n')
+        # msm_csv.write("#date:" + date + '\n')
+        # msm_csv.write("#time:" + time + '\n')
         df.to_csv(msm_csv, index=False)
 
+    return True
+
+def csv_to_msm(filename, date):
+    df = load_csv_to_df(filename, date)
+    df = dataProcessing.prep_df(df)
+    max_speed_df = dataProcessing.compute_max_speed_df(df)
+    write_max_speed_matrix(max_speed_df, filename, date)
     return True
 
 def read_max_speed_matrix(filename, date):
@@ -132,13 +170,6 @@ def read_max_speed_matrix(filename, date):
         max_speed_matrix = pd.read_csv(msm, skiprows = rows_to_skip)
 
     return max_speed_matrix
-
-def csv_to_msm(filename, date):
-    df = load_csv_to_df(filename, date)
-    df = dataProcessing.prep_df(df)
-    max_speed_df = dataProcessing.compute_max_speed_df(df)
-    write_max_speed_matrix(max_speed_df, filename, date)
-    return True
 
 def find_unparsed_gpx():
     """

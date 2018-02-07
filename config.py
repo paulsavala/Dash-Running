@@ -11,18 +11,13 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # File upload settings
-    UPLOAD_FOLDER = r'data/gpx/'
     ALLOWED_EXTENSIONS = set(['gpx'])
-
-    # File processing settings
+    UPLOAD_FOLDER = r'data/gpx/'
     GPX_FOLDER = UPLOAD_FOLDER
     CSV_FOLDER = r'data/csv/'
     MSM_FOLDER = r'data/msm/'
-    # data_directories = {'root': r'data/',
-    #                     'gpx': r'data/gpx/',
-    #                     'csv': r'data/csv/',
-    #                     'msm': r'data/max_speed_matrices/'}
 
-    max_minutes = 120
-    min_gradient = -30
-    max_gradient = 30
+    # File processing settings
+    MAX_MINUTES = 120 #120
+    MIN_GRADIENT = -30
+    MAX_GRADIENT = 30

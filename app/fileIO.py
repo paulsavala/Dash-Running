@@ -1,5 +1,4 @@
 import gpxpy # Used for reading gpx files
-from geopy.distance import vincenty # Used for calculating distances between (lat, lon) pairs
 import os
 import pandas as pd
 import numpy as np
@@ -14,7 +13,8 @@ def allowed_file(filename):
 
 def metadata_from_gpx(filename):
     """
-    Gets the name, date and time from a gpx file, given the filename. Returns all three as strings.
+    Gets the name, date and time from a gpx file, given the filename. Returns
+    all three as strings.
     """
     gpx_directory = app.config['GPX_FOLDER']
 
@@ -26,38 +26,26 @@ def metadata_from_gpx(filename):
             gpx = gpxpy.parse(gpxfile)
             name = gpx.tracks[0].name
             timestamp = gpx.tracks[0].segments[0].points[0].time
-            #timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
-            #date, time = timestamp.split('T')
-            #time = time.replace(':', '-') # A colon is used to indicate a key for metadata, so those must be changed
-        return name, timestamp
+            date = timestamp.date()
+            time = timestamp.time()
+        return name, date, time
+
+def distance_elevation_from_gpx(filename):
+    """
+    Gets the distance and elevation gain (both in meters) from a run given them
+    filename. Returns both as floats.
+    """
 
 def gpx_to_csv_to_msm(run, filename):
     df = gpx_to_csv(run, filename)
     max_speed_df = compute_max_speed_df(df)
-    date = run.timestamp.date().isoformat()
+    date = run.date.isoformat()
     write_max_speed_matrix(max_speed_df, run, date)
 
-    # gpx_directory = app.config['GPX_FOLDER']
-    # csv_directory = app.config['CSV_FOLDER']
-    # date = run.timestamp.date().isoformat()
-    # csv_date_directory = csv_directory + date + r'/'
-    #
-    # gpstracks = []
-    # with open(gpx_directory + filename, 'r') as gpxfile:
-    #     gpx = gpxpy.parse(gpxfile)
-    #     for track in gpx.tracks:
-    #         for segment in track.segments:
-    #             for point in segment.points:
-    #                 dict = {'Timestamp' : point.time,
-    #                         'Latitude' : point.latitude,
-    #                         'Longitude' : point.longitude,
-    #                         'Elevation' : point.elevation
-    #                         }
-    #                 gpstracks.append(dict)
-    #
-    # df = pd.DataFrame(gpstracks)
-    # max_speed_df = compute_max_speed_df(df)
-    return True
+    distance = df['dist_delta_meters'].sum()
+    elevation_gain = 0 # Still need to compute this
+
+    return distance, elevation_gain
 
 def gpx_to_csv(run, filename):
     """
@@ -65,14 +53,10 @@ def gpx_to_csv(run, filename):
     frame, then write it to a csv. Takes in a Run object.
     """
 
-    # name, _, time = metadata_from_gpx(filename)
-    #
     gpx_directory = app.config['GPX_FOLDER']
     csv_directory = app.config['CSV_FOLDER']
-    date = run.timestamp.date().isoformat()
+    date = run.date.isoformat()
     csv_date_directory = csv_directory + date + r'/'
-    #
-    # name, _, time = metadata_from_gpx(filename)
 
     gpstracks = []
     with open(gpx_directory + filename, 'r') as gpxfile:
@@ -89,14 +73,6 @@ def gpx_to_csv(run, filename):
 
     df = pd.DataFrame(gpstracks)
 
-    # If the converted csv file already exists, remove it so that it can be written again. This avoids
-    # appending stuff to the end of an already existing csv file and creating problems
-    # try:
-    #     os.remove(csv_date_directory + filename + '.csv')
-    # except OSError:
-    #     pass
-
-    #minutes = app.config['max_minutes']
     minutes = 120
     time_interval = np.arange(60*minutes + 1)
 
@@ -129,7 +105,6 @@ def load_csv_to_df(filename, date):
     return df
 
 def write_max_speed_matrix(df, run, date):
-    #name, _, time = metadata_from_gpx(filename)
 
     msm_directory = app.config['MSM_FOLDER']
     msm_date_directory = msm_directory  + date + r'/'
@@ -142,9 +117,6 @@ def write_max_speed_matrix(df, run, date):
 
     os.makedirs(os.path.dirname(msm_date_directory + filename + '.csv'), exist_ok=True)
     with open(msm_date_directory + filename + '.csv', 'a') as msm_csv:
-        # msm_csv.write("#name:" + name + '\n')
-        # msm_csv.write("#date:" + date + '\n')
-        # msm_csv.write("#time:" + time + '\n')
         df.to_csv(msm_csv, index=False)
 
     return True

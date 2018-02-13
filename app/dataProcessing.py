@@ -1,8 +1,25 @@
-import gpxpy # Used for reading gpx files
-from geopy.distance import vincenty # Used for calculating distances between (lat, lon) pairs
 import pandas as pd
 import numpy as np
 from app import app
+
+def haversine_np(lon1, lat1, lon2, lat2):
+    """
+    Calculate the great circle distance between two points
+    on the earth (specified in decimal degrees)
+
+    All args must be of equal length.
+
+    """
+    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+
+    a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
+
+    c = 2 * np.arcsin(np.sqrt(a))
+    km = 6367 * c
+    return km * 1000
 
 def prep_df(df):
     """
@@ -13,30 +30,15 @@ def prep_df(df):
     current_time = pd.to_datetime(df['Timestamp'])
     df['sec_elapsed'] = (current_time - start_time) / np.timedelta64(1, 's')
 
-    # Compute the distance (in meters) between successive points
-    df['lat_lon'] = list(zip(df['Latitude'], df['Longitude']))
-
-    lat_lon_offset = list(df['lat_lon'])
-    lat_lon_offset.insert(0,lat_lon_offset[0])
-    lat_lon_offset = lat_lon_offset[:-1]
-
-    df['lat_lon_offset'] = lat_lon_offset
-
-    df['lat_lon_pairs'] = list(zip(df['lat_lon'], df['lat_lon_offset']))
-
-    df['dist_delta_meters'] = df['lat_lon_pairs'].apply(lambda x: vincenty(x[0], x[1]).meters)
+    # Compute distance delta in meters
+    df['dist_delta_meters'] = haversine_np(df.Longitude.shift(), df.Latitude.shift(), \
+                                 df.loc[1:, 'Longitude'], df.loc[1:, 'Latitude']).fillna(0.0)
 
     # Compute the elevation difference (in meters) between successive points
-    elev_offset = list(df['Elevation'])
-    elev_offset.insert(0,elev_offset[0])
-    elev_offset = pd.Series(elev_offset[:-1])
-    df['elev_delta_meters'] = df['Elevation'] - elev_offset
+    df['elev_delta_meters'] = df['Elevation'].diff().fillna(0.0)
 
     # Compute the time difference (in seconds) between successive points (NEEDS SPEED-UP WORK DONE)
-    time_offset = list(df['Timestamp'])
-    time_offset.insert(0,time_offset[0])
-    time_offset = pd.Series(time_offset[:-1])
-    df['time_delta_sec'] = (pd.to_datetime(df['Timestamp']) - pd.to_datetime(time_offset)) / np.timedelta64(1, 's')
+    df['time_delta_sec'] = pd.to_datetime(df['Timestamp']).diff().fillna(0.0) / np.timedelta64(1, 's')
 
     # Compute instantaneous speed (in meters per second)
     df['speed_meters_sec'] = df['dist_delta_meters'] / df['time_delta_sec']
@@ -47,7 +49,7 @@ def prep_df(df):
     df['gradient'].fillna(0.0, inplace=True)
     df['gradient_100'] = 100*df['gradient']
 
-    df.drop(['Latitude', 'Longitude', 'lat_lon_offset', 'lat_lon_pairs'], axis=1, inplace=True)
+    df.drop(['Latitude', 'Longitude'], axis=1, inplace=True)
 
     max_gradient = 1 # Set a maximum gradient of 1 (45 degrees)
     bad_index = df['gradient'].loc[np.abs(df['gradient']) > max_gradient].index

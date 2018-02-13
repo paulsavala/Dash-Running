@@ -65,16 +65,16 @@ def upload():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            name, timestamp = metadata_from_gpx(filename)
-            run = Run.query.filter_by(name=name, timestamp=timestamp, \
+            name, date, time = metadata_from_gpx(filename)
+            run = Run.query.filter_by(name=name, date=date, time=time, \
                                         user_id=current_user.id)
             if run.first() is not None:
                 flash('This run already exists in the database')
                 return redirect(request.url)
-            run = Run(name=name, timestamp=timestamp, user_id=current_user.id)
+            run = Run(name=name, date=date, time=time, user_id=current_user.id)
             db.session.add(run)
             db.session.commit()
-            gpx_to_csv_to_msm(run, filename)
+            distance, elevation_gain = gpx_to_csv_to_msm(run, filename)
             flash(name + ' successfully uploaded and processed.')
             return redirect(url_for('index'))
     return render_template('upload.html', title='Upload')

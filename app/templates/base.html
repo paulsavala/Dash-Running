@@ -9,6 +9,7 @@
     <div>
       Dash Running:
       <a href="{{ url_for('index') }}">Home</a>
+      <a href="{{ url_for('user', username=current_user.username) }}">Profile</a>
       {% if current_user.is_anonymous %}
       <a href="{{ url_for('login') }}">Login</a>
       {% else %}

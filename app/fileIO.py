@@ -5,7 +5,7 @@ import numpy as np
 import app.dataProcessing
 from app import app
 from datetime import datetime
-from app.dataProcessing import compute_max_speed_df
+from app.dataProcessing import compute_max_speed_df, prep_df
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -30,12 +30,6 @@ def metadata_from_gpx(filename):
             time = timestamp.time()
         return name, date, time
 
-def distance_elevation_from_gpx(filename):
-    """
-    Gets the distance and elevation gain (both in meters) from a run given them
-    filename. Returns both as floats.
-    """
-
 def gpx_to_csv_to_msm(run, filename):
     df = gpx_to_csv(run, filename)
     max_speed_df = compute_max_speed_df(df)
@@ -45,6 +39,7 @@ def gpx_to_csv_to_msm(run, filename):
     distance = df['dist_delta_meters'].sum()
     elevation_gain = 0 # Still need to compute this
 
+    # It's a little ugly to just randomly return this data from this IO method...
     return distance, elevation_gain
 
 def gpx_to_csv(run, filename):

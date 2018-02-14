@@ -72,9 +72,19 @@ def upload():
                 flash('This run already exists in the database')
                 return redirect(request.url)
             run = Run(name=name, date=date, time=time, user_id=current_user.id)
+            distance, elevation_gain = gpx_to_csv_to_msm(run, filename)
+            # Distance and elevation_gain do not yet work
+            run.distance = distance
+            run.elevation_gain = elevation_gain
             db.session.add(run)
             db.session.commit()
-            distance, elevation_gain = gpx_to_csv_to_msm(run, filename)
             flash(name + ' successfully uploaded and processed.')
             return redirect(url_for('index'))
     return render_template('upload.html', title='Upload')
+
+@app.route('/user/<username>')
+@login_required
+def user(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    runs = Run.query.filter_by(user_id=user.id)
+    return render_template('user.html', user=user, runs=runs)

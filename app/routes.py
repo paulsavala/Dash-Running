@@ -6,7 +6,7 @@ from app.models import User, Run
 from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 import os
-from app.fileIO import allowed_file, metadata_from_gpx, gpx_to_csv_to_msm
+from app.fileIO import allowed_file, metadata_from_gpx, gpx_to_csv_to_msm, msms_by_date
 from app.visualization import bokeh_test_components
 import numpy as np
 
@@ -93,12 +93,24 @@ def user(username):
 
 @app.route('/bokeh_test')
 def bokeh_test():
+    start_date = '2017-01-01'
+    end_date = '2018-03-01'
+    msm_list = msms_by_date(start_date, end_date)
+
     current_gradient = request.args.get("gradient")
+    current_msm = request.args.get("msm")
     if current_gradient == None:
         current_gradient = 0
     else:
         current_gradient = int(current_gradient)
 
-    script, div = bokeh_test_components(current_gradient)
+    if current_msm == None:
+        current_msm = 0
+    else:
+        current_msm = int(current_msm)
+
+    script, div = bokeh_test_components(msm_list[current_msm], current_gradient)
+
     return render_template("bokeh_test.html", script=script, div=div, \
-                gradient_list = np.arange(-10, 11), current_gradient=current_gradient)
+                gradient_list = np.arange(-10, 11), current_gradient=current_gradient, \
+                msm_list=msm_list, current_msm=current_msm)

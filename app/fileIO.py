@@ -6,6 +6,7 @@ import app.dataProcessing
 from app import app
 from datetime import datetime
 from app.dataProcessing import compute_max_speed_df, prep_df
+from flask import flash
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -188,3 +189,44 @@ def parse_unparsed_gpx():
             pass
         else:
             fileIO.csv_to_msm(filename, date)
+
+def msms_by_date(start_date, end_date):
+    """
+    Return a list containing msm's for all runs which occurred between the
+    given dates.
+
+    Attributes:
+        start_date: A string in the format YYYY-MM-DD
+        end_date: A string in the format YYYY-MM-DD
+    """
+    msm_directory = app.config['MSM_FOLDER']
+
+    try:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+    except:
+        return 'Invalid dates'
+
+    if start_date > end_date:
+        return None
+
+    msm_directory_contents = os.listdir(msm_directory)
+    msm_subdirectories = [subdirectory for subdirectory \
+                            in msm_directory_contents \
+                            if os.path.isdir(msm_directory + subdirectory)]
+
+    msm_list = []
+
+    for subdirectory in msm_subdirectories:
+        try:
+            subdirectory_date = datetime.strptime(subdirectory, '%Y-%m-%d')
+        except:
+            return 'Invalid directory date'
+
+        if start_date <= subdirectory_date <= end_date:
+            all_files = os.listdir(msm_directory + subdirectory)
+            valid_files = [individual_file for individual_file \
+                            in all_files if individual_file.endswith('.csv')]
+            for valid_file in valid_files:
+                msm_list.append(pd.read_csv(msm_directory + subdirectory + '/' + valid_file))
+    return msm_list

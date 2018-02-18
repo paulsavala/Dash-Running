@@ -15,6 +15,20 @@
      <input type="submit">
    </form>
 
+   <form>
+     <select name="msm">
+ 	     {% for msm in msm_list %}
+        {% if loop.index-1 == current_msm %}
+          <option selected value="{{ loop.index - 1 }}">{{ loop.index - 1 }}</option>
+        {% else %}
+ 			   <option value="{{ loop.index - 1}}">{{ loop.index - 1 }}</option>
+        {% endif %}
+       {% endfor %}
+      </select>
+      <input type="submit">
+    </form>
+
   {{ script|safe }}
   {{ div|safe }}
+
 {% endblock %}

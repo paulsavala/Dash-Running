@@ -7,10 +7,12 @@ from werkzeug.urls import url_parse
 from werkzeug import secure_filename
 import os
 from app.fileIO import allowed_file, metadata_from_gpx, gpx_to_csv_to_msm
+from app.visualization import bokeh_test_components
+import numpy as np
 
 @app.route('/')
 @app.route('/index')
-@login_required
+#@login_required
 def index():
     runs = Run.query.filter_by(user_id=current_user.id)
     return render_template('index.html', title='Home', runs=runs)
@@ -88,3 +90,15 @@ def user(username):
     user = User.query.filter_by(username=username).first_or_404()
     runs = Run.query.filter_by(user_id=user.id)
     return render_template('user.html', user=user, runs=runs)
+
+@app.route('/bokeh_test')
+def bokeh_test():
+    current_gradient = request.args.get("gradient")
+    if current_gradient == None:
+        current_gradient = 0
+    else:
+        current_gradient = int(current_gradient)
+
+    script, div = bokeh_test_components(current_gradient)
+    return render_template("bokeh_test.html", script=script, div=div, \
+                gradient_list = np.arange(-10, 11), current_gradient=current_gradient)

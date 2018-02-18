@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Bokeh Test</h1>
+  <form>
+    <select name="gradient">
+	     {% for gradient in gradient_list %}
+		     {% if gradient == current_gradient %}
+			      <option selected value="{{ gradient }}">{{ gradient }}</option>
+		     {% else %}
+			      <option value="{{ gradient }}">{{ gradient }}</option>
+		     {% endif %}
+	     {% endfor %}
+     </select>
+     <input type="submit">
+   </form>
+
+  {{ script|safe }}
+  {{ div|safe }}
+{% endblock %}
